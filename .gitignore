@@ -27,3 +27,15 @@
 *.exe
 *.out
 *.app
+
+# Debug
+*.Debug.*
+*.crun
+*.jlink
+*.dbgdt
+*.dnx
+*.wsdt
+*.dep
+*.log
+*.ewd
+Debug/**
