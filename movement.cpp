@@ -1,19 +1,21 @@
-#include "movement.hpp"
+#include "movement.h"
+#include "ll_helper.h"
 
 // Constructor
 // Takes the motor configuration.
 // Any steps added will be validated against the motor configuration.
-CMovement::CMovement(const CMotorConfig& motorConfiguration) :
-  m_motorConfiguration(motorConfiguration)
+CMovement::CMovement(CMotorConfig& motorConfiguration) :
+  m_motorConfig(motorConfiguration),
+  m_stopped(false)
 {
 }
 
-// AddMove adds a specific move to this movement.
+// AddLinearMove adds a specific move to this movement.
 // It is an error to add more than one move for a specific motor to any
 // movement.
 // Returns 0 on success
 //        -ve on failure
-int CMovement::AddMove(MotorId motorId, int steps)
+int CMovement::AddLinearMove(MotorId motorId, int steps)
 {
   if (m_stepDefinition.find(motorId) != m_stepDefinition.end())
   {
@@ -33,10 +35,10 @@ int CMovement::Begin()
   // Work out what the slowest motor will be, taking into account both the number
   // of steps and the acceleration/deceleration of the motor.
   uint maxTicks = 0;
-  for (MotorStepMap::iterator iter = m_stepDefinition.getIterator(); iter != m_stepDefinition.end(); ++iter)
+  for (MotorStepMap::iterator iter = m_stepDefinition.begin(); iter != m_stepDefinition.end(); ++iter)
   {
-    const CMotor *pMotor;
-    if (!m_motorConfiguration.getMotor(iter->first, *pMotor))
+    CMotor *pMotor;
+    if (m_motorConfig.GetMotor(iter->first, &pMotor) == S_OK)
     {
       uint distance = (uint)abs(iter->second);
       uint acceleration = pMotor->Acceleration();
@@ -47,20 +49,20 @@ int CMovement::Begin()
       // How many steps does it take to reach maximum speed (and then deccelerate to 0 again)
       // acceleration is steps/second/second
       // speed is steps/second
-      uint halfway = (distance + 1) \ 2;
+      uint halfway = (distance + 1) / 2;
 
-      uint distanceInTime;
+      uint distanceInTime = 0;
       uint t = 0;
       do
       {
         ++t;
 
-        distance = t * t * acceleration + (t > (speed / acceleration)) ? (t - (speed / acceleration)) * speed : 0;
+        distanceInTime = t * t * acceleration + ((t > (speed / acceleration)) ? (t - (speed / acceleration)) * speed : 0);
 
       } while (distanceInTime < halfway);
 
       // Store the maximum number of ticks that are required
-      maxTicks = max(t * ticks, maxTicks);
+      maxTicks = max(distance * ticks, maxTicks);
     }
     else
     {
@@ -70,15 +72,15 @@ int CMovement::Begin()
 
   // maxTicks is the largest number of ticks to get to the end of the movement
   // everything else needs to be scaled relative to maxTicks.
-  for (MotorStepMap::iterator iter = m_stepDefinition.getIterator(); iter != m_stepDefinition.end(); ++iter)
+  for (MotorStepMap::iterator iter = m_stepDefinition.begin(); iter != m_stepDefinition.end(); ++iter)
   {
     m_ticksPerStep[iter->first] = maxTicks / iter->second;
 
     // Set the direction for this movement for this motor
-    const CMotor *pMotor;
-    if (!m_motorConfiguration.getMotor(iter->first, *pMotor))
+    CMotor *pMotor;
+    if (m_motorConfig.GetMotor(iter->first, &pMotor) == S_OK)
     {
-      pMotor->setDirection(iter->second > 0);
+      pMotor->SetDirection(iter->second > 0);
     }
   }
 
@@ -93,12 +95,12 @@ int CMovement::Tick()
 {
   if (!m_stopped)
   {
-    for (MotorStepMap::iterator iter = m_ticksPerStep.getIterator(); iter != m_ticksPerStep.end(); ++iter)
+    for (MotorStepMap::iterator iter = m_ticksPerStep.begin(); iter != m_ticksPerStep.end(); ++iter)
     {
       int tickCount = ++m_tickCount[iter->first];
 
-      const CMotor *pMotor;
-      if (!m_motorConfiguration.getMotor(iter->first, *pMotor))
+      CMotor *pMotor;
+      if (m_motorConfig.GetMotor(iter->first, &pMotor) == S_OK)
       {
         if (tickCount >= iter->second)
         {
@@ -108,10 +110,13 @@ int CMovement::Tick()
         else
         {
           pMotor->Tick(false);
+          m_tickCount[iter->first] = tickCount;
         }
       }
     }
   }
+  
+  return S_OK;
 }
 
 // Cancel stops the movement and handles any resets required.

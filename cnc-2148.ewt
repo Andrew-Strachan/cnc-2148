@@ -2314,6 +2314,21 @@
         </settings>
     </configuration>
     <file>
+        <name>$PROJ_DIR$\handler.c</name>
+        <configuration>
+            <name>Debug</name>
+        </configuration>
+    </file>
+    <file>
         <name>$PROJ_DIR$\main.cpp</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\motor.cpp</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\MotorConfig.cpp</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\movement.cpp</name>
     </file>
 </project>

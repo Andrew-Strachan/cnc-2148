@@ -1,9 +1,11 @@
-#ifndef __MOTORCONFIG_HPP__
-#define __MOTORCONFIG_HPP__
+#ifndef __MOTORCONFIG_H__
+#define __MOTORCONFIG_H__
 
-#include "motor.hpp"
+#include <map>
+#include "motor.h"
+#include "limits.h"
 
-typedef tagMotorId {
+typedef enum tagMotorId {
   X_Axis = 1,
   Y_Axis = 2,
   Z_Axis = 3,
@@ -13,11 +15,19 @@ typedef tagMotorId {
   FilamentFeed_3 = 7
 } MotorId;
 
+typedef std::map<MotorId, CMotor*> MotorMap;
+
 class CMotorConfig
 {
-  int AddMotor(MotorId motorId, CMotor &motor);
+private:
+  MotorMap *m_motors;
   
-  int GetMotor(MotorId motorId, CMotor *pMotor);
-}
+public:
+  CMotorConfig();
+  
+  int AddMotor(MotorId motorId, CMotor *pMotor);
+  
+  int GetMotor(MotorId motorId, CMotor **pMotor);
+};
 
-#endif // __MOTORCONFIG_HPP__
+#endif // __MOTORCONFIG_H__

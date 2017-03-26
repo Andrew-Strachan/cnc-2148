@@ -1,6 +1,9 @@
 #ifndef __MOTOR_HPP__
 #define __MOTOR_HPP__
 
+#include "ll_helper.h"
+#include "errors.h"
+
 class CMotor
 {
 private:
@@ -15,12 +18,14 @@ private:
     uint m_directionBit;
     Port m_stepPort;
     uint m_stepBit;
-
+    Port m_mirrorPort;
+    uint m_mirrorBit;
+    
     // Operating properties
     uint m_pulseTick;
 
 public:
-  CMotor(uint maxStepsPerSecond, uint maxAcceleration, uint ticksPerPulse, uint dutyTicks, Port directionPort, uint directionBit, Port stepPort, uint stepBit);
+  CMotor(uint maxStepsPerSecond, uint maxAcceleration, uint ticksPerPulse, uint dutyTicks, Port directionPort, uint directionBit, Port stepPort, uint stepBit, Port mirrorPort = NULL, uint mirrorBit = 0);
 
   // Need to be able to configure when to step, how long the step pulse is.  Maybe how long the
   // direction pulse needs to be held after a step pulse starts.
@@ -52,6 +57,6 @@ public:
   //    If we get called with step == True before ticksPerPulse calls after a previous
   //    call with step == True then an error will be returned.
   int Tick(bool step);
-}
+};
 
 #endif // __MOTOR_HPP__
