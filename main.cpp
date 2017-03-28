@@ -8,18 +8,10 @@ typedef enum {
   ConfigUpdated = 0x4,
   Go = 0x8,
   Running = 0x16
-} Flags;
+} ExecutionFlagValues;
+typedef CFlags<ExecutionFlagValues> ExecutionFlags;
 
-volatile Flags g_flags = None;
-
-inline Flags operator|(Flags a, Flags b)
-{return static_cast<Flags>(static_cast<int>(a) | static_cast<int>(b));}
-inline Flags operator&(Flags a, Flags b)
-{return static_cast<Flags>(static_cast<int>(a) & static_cast<int>(b));}
-inline Flags operator&=(Flags a, Flags b)
-{ a = a & b; return a; }
-inline Flags operator~(Flags a)
-{return static_cast<Flags>(~static_cast<int>(a));}
+volatile ExecutionFlags g_flags = None;
 
 __irq __arm void DefaultInterruptHandler(void)
 {
@@ -35,15 +27,15 @@ int main()
 {
   // Disable interrupts while we set things up
   VICIntSelect = 0;
-  
+
   PLLCON_bit.PLLE = 1;
   PLLCFG_bit.MSEL = 5;
   PLLCFG_bit.PSEL = 1;
-  
+
   // Perform a feed to set the PLL parameters
   PLLFEED = 0xAA;
   PLLFEED = 0x55;
-  
+
   while (!PLLSTAT_bit.PLOCK)
   {
     // Wait
@@ -62,13 +54,13 @@ int main()
   PLLFEED = 0x55;
 
   // Initialize debug LED ports - flash LED during setup stage
-  
+
   // Setup GPIO
   SCS_bit.GPIO0M = 1; // Enable FIO on port 0
   PINSEL0_bit.P0_12 = 0x2;  // Enable MAT1.1 on pin 0.12
   FIO0DIR_bit.P0_23 = 1;
   FIO0DIR_bit.P0_22 = 1;
-  
+
   // Setup timers
   T1MCR = 0;
   T1TCR = 0;
@@ -85,7 +77,7 @@ int main()
   T1EMR = 0;
   T1EMR_bit.EM1 = 1;
   T1EMR_bit.EMC1 = 0x3;
-  
+
   // Setup interrupts
   VICDefVectAddr = (unsigned long)DefaultInterruptHandler;
   VICVectAddr8 = (unsigned long)Timer1_Handler;
@@ -94,15 +86,15 @@ int main()
 
   // Enable interrupts and start the timers
   VICIntSelect = 0x20;
-  
+
   T1TCR_bit.CR = 0; // Release TC and PC
-  
+
   // Setup USB communication
-  
+
   // Initialize motor drivers
-  
+
   // Initialize LCD drivers - if applicable
-  
+
   // Initialize SD card drivers and filesystem
 
   while (true)
