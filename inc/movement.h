@@ -31,9 +31,15 @@ public:
   // Begin calculates all the internal state required for the movement.
   // Returns 0 on success
   //        -ve on failure
+  Begin should return something that indicates to the caller what the initial
+  timer match register value should be.
   int Begin();
 
   // Tick executes a single tick within the movement.
+  Tick has to handle the acceleration - it needs to return something that will enable
+  the caller to modify the timer match register to support acceleration.  The motor ticks
+  will just be called to get the movement correct - the timer match register will be used
+  to control the speed (and acceleration) of the movement.
   // Returns 0 on success
   //         1 on completion
   //        -ve on failure
