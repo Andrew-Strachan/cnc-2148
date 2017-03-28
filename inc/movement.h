@@ -2,7 +2,7 @@
 #define __MOVEMENT_HPP__
 
 #include <map>
-#include "MotorConfig.hpp"
+#include "MotorConfig.h"
 
 class CMovement {
 private:
@@ -19,7 +19,7 @@ public:
   // Constructor
   // Takes the motor configuration.
   // Any steps added will be validated against the motor configuration.
-  CMovement(const CMotorConfig& motorConfiguration);
+  CMovement(CMotorConfig& motorConfiguration);
 
   // AddLinearMove adds a specific move to this movement.
   // It is an error to add more than one move for a specific motor to any
@@ -44,6 +44,6 @@ public:
   //    emergencyStop: if True then Emergency stop - just stop executing.
   //                   if False then stop, but follow the rules for decceleration
   void Cancel(bool emergencyStop);
-}
+};
 
 #endif // __MOVEMENT_HPP__

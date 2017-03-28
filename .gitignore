@@ -27,4 +27,20 @@
 *.exe
 *.out
 *.app
+
+# VSCode files
 /.vs
+
+
+# Debug
+*.Debug.*
+*.crun
+*.jlink
+*.dbgdt
+*.dnx
+*.wsdt
+*.dep
+*.log
+*.ewd
+Debug/**
+

@@ -1,4 +1,5 @@
-#include "motor.hpp"
+#include "motor.h"
+
 
 CMotor::CMotor(
          uint maxStepsPerSecond, 
@@ -8,7 +9,9 @@ CMotor::CMotor(
          Port directionPort, 
          uint directionBit, 
          Port stepPort, 
-         uint stepBit) : 
+         uint stepBit, 
+         Port mirrorPort, 
+         uint mirrorBit) : 
             m_maxStepsPerSecond(maxStepsPerSecond),
             m_maxAcceleration(maxAcceleration),
             m_ticksPerPulse(ticksPerPulse),
@@ -17,13 +20,22 @@ CMotor::CMotor(
             m_directionBit(directionBit),
             m_stepPort(stepPort),
             m_stepBit(stepBit),
+            m_mirrorPort(mirrorPort),
+            m_mirrorBit(mirrorBit),
             m_pulseTick(0)
 {
 }
 
 void CMotor::SetDirection(bool positive)
 {
-  m_directionPort[m_directionBit] = positive;
+  if (positive)
+  {
+    *m_directionPort = *m_directionPort | (1 << m_directionBit);
+  }
+  else
+  {
+    *m_directionPort = *m_directionPort & ~(1 << m_directionBit);
+  }
 }
 
 int CMotor::Tick(bool step)
@@ -38,13 +50,22 @@ int CMotor::Tick(bool step)
     }
     
     m_pulseTick = 0;
-    m_stepPort[m_stepBit] = 1;
+    *m_stepPort = *m_stepPort | (1 << m_stepBit);
+    if (m_mirrorPort)
+    {
+      *m_mirrorPort = *m_mirrorPort | (1 << m_mirrorBit);
+    }
   }
   else
   {
     if (m_pulseTick >= m_dutyTicks)
     {
-      m_stepPort[m_stepBit] = 0;
+      *m_stepPort = *m_stepPort & ~(1 << m_stepBit);
+      
+      if (m_mirrorPort)
+      {
+        *m_mirrorPort = *m_mirrorPort & ~(1 << m_mirrorBit);
+      }
     }
   }
   
