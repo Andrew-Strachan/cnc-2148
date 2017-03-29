@@ -30,8 +30,18 @@ int CMovement::AddLinearMove(MotorId motorId, int steps)
 // Begin calculates all the internal state required for the movement.
 // Returns 0 on success
 //        -ve on failure
-int CMovement::Begin()
+int CMovement::Begin(uint* pPeriodMultipler)
 {
+  We need to work out what the Period Multiplier should be initially - it will change
+  to support acceleration of the head.  1 implies that the head is travelling as fast as possible.
+  Given the starting speed (ss), and knowing the top speed (ts) of a motor, the Period Multiplier
+  will be ts/ss
+
+  If we assume the acceleration is in terms of change in speed per period for a motor then we should be
+  able to recalculate the acceptable multiplier for a given motor every time we send the motor a Tick(true).
+
+  We should then return the largest multiplier for all the motors involved in the movement.
+
   // Work out what the slowest motor will be, taking into account both the number
   // of steps and the acceleration/deceleration of the motor.
   uint maxTicks = 0;
@@ -91,7 +101,7 @@ int CMovement::Begin()
 // Returns 0 on success
 //         1 on completion
 //        -ve on failure
-int CMovement::Tick()
+int CMovement::Tick(uint* pPeriodMultipler)
 {
   if (!m_stopped)
   {
@@ -115,7 +125,7 @@ int CMovement::Tick()
       }
     }
   }
-  
+
   return S_OK;
 }
 

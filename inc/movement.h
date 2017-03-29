@@ -33,17 +33,21 @@ public:
   //        -ve on failure
   Begin should return something that indicates to the caller what the initial
   timer match register value should be.
-  int Begin();
+
+  If we consider a value of 1 to be the fastest speed we can travel at, then we'll have a
+  multiplier that is used to slow down the speed (i.e. increase the period).
+  int Begin(uint* pPeriodMultipler);
 
   // Tick executes a single tick within the movement.
   Tick has to handle the acceleration - it needs to return something that will enable
   the caller to modify the timer match register to support acceleration.  The motor ticks
   will just be called to get the movement correct - the timer match register will be used
   to control the speed (and acceleration) of the movement.
+  See Begin for details on the period multiplier
   // Returns 0 on success
   //         1 on completion
   //        -ve on failure
-  int Tick();
+  int Tick(uint* pPeriodMultipler);
 
   // Cancel stops the movement and handles any resets required.
   // Parameters:
