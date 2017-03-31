@@ -42,6 +42,10 @@ int CMovement::Begin(uint* pPeriodMultipler)
 
   We should then return the largest multiplier for all the motors involved in the movement.
 
+  We only work in multiples of the base speed.  We make the base speed way too fast and run at something like 10 times slower than the base speed.  Using a multiplier of 16000 or something to get down to a slow speed.
+  e.g. with a timer frequency of 5.76kHz, 72 steps per rotation and 8x micro-stepping, a pitch of 5mm/rotation we can go from a speed of 10mm/s with a multiplier of 1 and 0.001mm/s with a multiplier of 10000.  By altering the timer frequency and the micro-steps we could easily change the top speed.  i.e. Changing to not using micro-stepping, we would immediately change the
+  top speed to 80mm/s.
+
   // Work out what the slowest motor will be, taking into account both the number
   // of steps and the acceleration/deceleration of the motor.
   uint maxTicks = 0;
