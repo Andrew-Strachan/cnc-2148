@@ -30,6 +30,7 @@ private:
   CStepData *m_pStepData;
 
   bool m_stopped;
+  unsigned long m_steps;
 
 public:
   // Constructor

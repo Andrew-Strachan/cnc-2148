@@ -9,7 +9,8 @@ CMovement::CMovement(CMotorConfig& motorConfiguration) :
   m_stopped(false),
   m_pStepData(NULL),
   m_stepDataCount(0),
-	m_allocatedStepDataCount(0)
+	m_allocatedStepDataCount(0),
+	m_steps(0)
 {
 }
 
@@ -143,7 +144,10 @@ int CMovement::Tick(uint* pPeriodMultipler)
           pMotor->Tick(true);
 		  m_pStepData[index].TickCount = 0;
           //m_tickCount[iter->first] = 0;
-		  printf("step/n");
+		  if (++m_steps > 200)
+		  {
+			  return S_FALSE;
+		  }
         }
         else
         {
