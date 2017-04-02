@@ -143,6 +143,7 @@ int CMovement::Tick(uint* pPeriodMultipler)
           pMotor->Tick(true);
 		  m_pStepData[index].TickCount = 0;
           //m_tickCount[iter->first] = 0;
+		  printf("step/n");
         }
         else
         {
