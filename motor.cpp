@@ -2,7 +2,8 @@
 
 
 CMotor::CMotor(
-         uint maxStepsPerSecond, 
+         uint minSpeedMultiplier, 
+         uint initialSpeedMultiplier,
          uint maxAcceleration, 
          uint ticksPerPulse, 
          uint dutyTicks,
@@ -12,7 +13,8 @@ CMotor::CMotor(
          uint stepBit, 
          Port mirrorPort, 
          uint mirrorBit) : 
-            m_maxStepsPerSecond(maxStepsPerSecond),
+            m_minSpeedMultiplier(minSpeedMultiplier),
+            m_initialSpeedMultiplier(initialSpeedMultiplier),
             m_maxAcceleration(maxAcceleration),
             m_ticksPerPulse(ticksPerPulse),
             m_dutyTicks(dutyTicks),
@@ -36,6 +38,11 @@ void CMotor::SetDirection(bool positive)
   {
     *m_directionPort = *m_directionPort & ~(1 << m_directionBit);
   }
+}
+
+void CMotor::SetCurrentSpeedMultiplier(uint speedMultiplier)
+{
+  m_currentSpeedMultiplier = speedMultiplier;
 }
 
 int CMotor::Tick(bool step)

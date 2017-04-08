@@ -1,5 +1,6 @@
 #include "c/intrinsics.h"
 #include "nxp/iolpc2148.h"
+#include "flags.h"
 #include "motor.h"
 #include "movement.h"
 
@@ -10,8 +11,8 @@ typedef enum {
   ConfigUpdated = 0x4,
   Go = 0x8,
   Running = 0x16
-} ExecutionFlagValues;
-typedef CFlags<ExecutionFlagValues> ExecutionFlags;
+} ExecutionFlags;
+//typedef CFlags<ExecutionFlagValues> ExecutionFlags;
 
 volatile ExecutionFlags g_flags = None;
 
@@ -20,22 +21,22 @@ void DefaultInterruptHandler(void)
 return;
 }
 
-void Timer1_Handler(void)
+void Timer0_Handler(void)
 {
   g_flags = Tick;
   //FIO0CLR_bit.P0_23 = 1;
   //T1MCR_bit.MR1INT = 0;
 
-  if (T1IR_bit.MR1INT)
+  if (T0IR_bit.MR1INT)
   {
 
   }
-  if (T1IR_bit.MR0INT)
+  if (T0IR_bit.MR0INT)
   {
 
   }
 
-  T1IR = 0x3;
+  T0IR = 0x3;
 }
 
 int main()
@@ -58,14 +59,23 @@ int main()
   FIO0DIR_bit.P0_15 = 1;
   FIO0DIR_bit.P0_16 = 1;
   FIO0DIR_bit.P0_17 = 1;
+  FIO0DIR_bit.P0_18 = 1;  
+  FIO0DIR_bit.P0_19 = 1;
+  FIO0DIR_bit.P0_9 = 1;
+  FIO0DIR_bit.P0_10 = 1;  
+  FIO0DIR_bit.P0_11 = 1;
 
+  FIO0DIR_bit.P0_30 = 0;
+  
   // Disable interrupts while we set things up
   VICIntSelect = 0;
   VICIntEnClear = 0xFFFFFFFF;
   VICVectAddr = 0x0;
 
   PLLCON_bit.PLLE = 1;
-  PLLCFG = 0x24;
+  
+  PLLCFG_bit.MSEL = 0x4;
+  PLLCFG_bit.PSEL = 0x1;
 
   // Perform a feed to set the PLL parameters
   PLLFEED = 0xAA;
@@ -101,58 +111,75 @@ int main()
   FIO0SET_bit.P0_23 = 1;
 
   // Setup timers
-  T1MCR = 0;
-  T1TCR = 0;
-  T1TC = 0;
-  T1PC = 0;
-  T1IR = 0;
-  T1TCR_bit.CR = 1;  // Reset and hold the TC and PC at 0
-  T1TCR_bit.CE = 1;
-  T1PR = 0x100;
-  T1MR0 = 1000;
-  T1MR1 = 50;
-  T1MCR_bit.MR1INT = 1;
-  T1MCR_bit.MR1RES = 1;
-  T1MCR_bit.MR1STOP = 0;
-  T1MCR_bit.MR0INT = 0;
-  T1MCR_bit.MR0RES = 0;
-  T1MCR_bit.MR0STOP = 0;
-  T1EMR = 0;
-  T1EMR_bit.EM1 = 1;
-  T1EMR_bit.EMC1 = 0x3;
-  T1EMR_bit.EM0 = 1;
-  T1EMR_bit.EMC0 = 0x3;
+  T0MCR = 0;
+  T0TCR = 0;
+  T0TC = 0;
+  T0PC = 0;
+  T0IR = 0x3;
+  T0TCR_bit.CR = 1;  // Reset and hold the TC and PC at 0
+  T0TCR_bit.CE = 1;
+  T0PR = 0x20;
+  T0MR0 = 1000;
+  T0MR1 = 50;
+  T0MCR_bit.MR1INT = 0;
+  T0MCR_bit.MR1RES = 0;
+  T0MCR_bit.MR1STOP = 0;
+  T0MCR_bit.MR0INT = 1;
+  T0MCR_bit.MR0RES = 1;
+  T0MCR_bit.MR0STOP = 0;
+  T0EMR = 0;
+  T0EMR_bit.EM1 = 1;
+  T0EMR_bit.EMC1 = 0x3;
+  T0EMR_bit.EM0 = 1;
+  T0EMR_bit.EMC0 = 0x3;
 
-  T0TCR_bit.CE = 0;
+  T1TCR_bit.CE = 0;
 
   // Setup interrupts
   VICDefVectAddr = (unsigned)DefaultInterruptHandler;
-  VICVectAddr4 = (unsigned)Timer1_Handler;
-  VICVectCntl4 = 0x20 | 5; // Timer1 will trigger Int Vector 4
+  VICVectAddr4 = (unsigned)Timer0_Handler;
+  VICVectCntl4 = 0x20 | 4; // Timer0 will trigger Int Vector 4
 
   // Enable interrupts and start the timers
   __enable_irq();
 
-  VICIntEnClear = 0x20;
-  VICIntEnable = 0x20;
+  VICIntEnClear = 0x10;
+  VICIntEnable = 0x10;
 
-  T1TCR_bit.CR = 0; // Release TC and PC
+  
 
   // Setup USB communication
 
   // Initialize motor drivers
-  CMotor *motor = new CMotor(10, 1, 10, 2, &FIO0PIN, 14, &FIO0PIN, 15, &FIO0PIN, 16);
+  CMotor *motor = new CMotor(10, 200, 10, 5, 2, &FIO0PIN, 14, &FIO0PIN, 15, &FIO0PIN, 16);
   motor->SetDirection(false);
+  CMotor *yMotor = new CMotor(10, 200, 10, 5, 2, &FIO0PIN, 17, &FIO0PIN, 18, &FIO0PIN, 19);
+  motor->SetDirection(false);
+  CMotor *zMotor = new CMotor(10, 200, 10, 5, 2, &FIO0PIN, 9, &FIO0PIN, 10, &FIO0PIN, 11);
+  motor->SetDirection(false);  
+  
 
   CMotorConfig motorConfig;
   motorConfig.AddMotor(X_Axis, motor);
-
+  motorConfig.AddMotor(Y_Axis, yMotor);  
+  motorConfig.AddMotor(Z_Axis, zMotor);
+  
   CMovement *movement = new CMovement(motorConfig);
 
-  movement->AddLinearMove(X_Axis, 1000);
+  movement->AddLinearMove(X_Axis, 2500);
+  movement->AddLinearMove(Y_Axis, 1500);  
+  movement->AddLinearMove(Z_Axis, 3000);  
 
-  movement->Begin();
-
+  unsigned speedMultiplier = 0;
+  movement->Begin(&speedMultiplier);
+  
+  const unsigned baseSpeed = 100;
+  
+  T0MR0 = baseSpeed * speedMultiplier;
+  
+  T0TCR_bit.CR = 0; // Release TC and PC 
+  
+  
   // Initialize LCD drivers - if applicable
 
   // Initialize SD card drivers and filesystem
@@ -164,18 +191,6 @@ int main()
   bool direction = 0;
   while (true)
   {
-    if (++i > 0x80000)
-    {
-      i = 0;
-      if (FIO0PIN_bit.P0_21 & 1)
-      {
-        FIO0CLR_bit.P0_21 = 1;
-      }
-      else
-        FIO0SET_bit.P0_21 = 1;
-
-      direction = !direction;
-    }
     if (FIO0PIN_bit.P0_30 == push)
     {
       if (++debounceCount > 50)
@@ -186,6 +201,8 @@ int main()
           motor->SetDirection(direction);
 
           FIO0PIN_bit.P0_17 = direction;
+          
+          movement->Begin(&speedMultiplier);
         }
         else
         {
@@ -214,20 +231,46 @@ int main()
     }
     if (g_flags & Tick)
     {
+      g_flags = g_flags & ~Tick;
+
       // Perform the next tick.  This just means that our timer went off, it doesn't necessarily
       // indicate that a step is due for any particular axis/motor.
       //ExecuteTick();
-      if (FIO0PIN_bit.P0_23 & 1)
-        FIO0CLR_bit.P0_23 = 1;
-      else
-        FIO0SET_bit.P0_23 = 1;
-
-      while(movement->Tick() != S_FALSE)
+      int result = movement->Tick(&speedMultiplier);
+      if (result == S_OK)
       {
-
+        T0MR0 = baseSpeed * speedMultiplier;
+        
+        if (++i > 0x20)
+        {
+          i = 0;
+          if (FIO0PIN_bit.P0_21 & 1)
+          {
+            FIO0CLR_bit.P0_21 = 1;
+          }
+          else
+          {
+            FIO0SET_bit.P0_21 = 1;
+          }
+        }
       }
-
-      g_flags = g_flags & ~Tick;
+      else if (result == S_FALSE)
+      {
+        // Movement is finished.
+        FIO0SET_bit.P0_21 = 1;
+      }
+      else
+      {
+        // We hit an error
+        g_flags |= Stop;
+        
+      }
+      
+      if (g_flags & Tick != 0)
+      {
+        // We took too long to calculate the next tick period
+        //g_flags |= Stop;
+      }
     }
 
     if (g_flags & ConfigUpdated)

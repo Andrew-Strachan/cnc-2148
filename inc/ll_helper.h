@@ -48,6 +48,7 @@ typedef union {
 typedef volatile unsigned long *Port;
 typedef unsigned int uint;
 
+template <typename T> T min(const T &x, const T &y) { return (x > y) ? y : x; };
 template <typename T> T max(const T &x, const T &y) { return (x < y) ? y : x; };
 
 #endif

@@ -6,13 +6,25 @@
 
 class CMovement {
 private:
+  typedef struct _MotorStepData
+  {
+    _MotorStepData(uint steps) : StepDefinition(steps) { }
+    
+    int StepDefinition;
+    int TicksPerStep;
+    int TickCount;
+    int StepCount;
+    int AccelerationStepLimit;
+
+    CMotor *pMotor;
+  } MotorStepData;
+  
   CMotorConfig& m_motorConfig;
 
-  typedef std::map<MotorId, int> MotorStepMap;
-  MotorStepMap m_stepDefinition;
-  MotorStepMap m_ticksPerStep;
-  MotorStepMap m_tickCount;
+  typedef std::map<MotorId, MotorStepData*> MotorStepMap;
+  MotorStepMap m_stepData;
 
+  uint m_accumulatedTicks;
   bool m_stopped;
 
 public:
@@ -31,19 +43,19 @@ public:
   // Begin calculates all the internal state required for the movement.
   // Returns 0 on success
   //        -ve on failure
-  Begin should return something that indicates to the caller what the initial
-  timer match register value should be.
+  // Begin should return something that indicates to the caller what the initial
+  // timer match register value should be.
 
-  If we consider a value of 1 to be the fastest speed we can travel at, then we'll have a
-  multiplier that is used to slow down the speed (i.e. increase the period).
+  // If we consider a value of 1 to be the fastest speed we can travel at, then we'll have a
+  // multiplier that is used to slow down the speed (i.e. increase the period).
   int Begin(uint* pPeriodMultipler);
 
   // Tick executes a single tick within the movement.
-  Tick has to handle the acceleration - it needs to return something that will enable
-  the caller to modify the timer match register to support acceleration.  The motor ticks
-  will just be called to get the movement correct - the timer match register will be used
-  to control the speed (and acceleration) of the movement.
-  See Begin for details on the period multiplier
+  // Tick has to handle the acceleration - it needs to return something that will enable
+  // the caller to modify the timer match register to support acceleration.  The motor ticks
+  // will just be called to get the movement correct - the timer match register will be used
+  // to control the speed (and acceleration) of the movement.
+  // See Begin for details on the period multiplier
   // Returns 0 on success
   //         1 on completion
   //        -ve on failure

@@ -10,7 +10,8 @@ private:
     // Configuration Parameters
     uint m_ticksPerPulse;
     uint m_dutyTicks;
-    uint m_maxStepsPerSecond;
+    uint m_minSpeedMultiplier;
+    uint m_initialSpeedMultiplier;
     uint m_maxAcceleration;
 
     // PIN Parameters
@@ -23,21 +24,28 @@ private:
     
     // Operating properties
     uint m_pulseTick;
+    uint m_currentSpeedMultiplier;
 
 public:
-  CMotor(uint maxStepsPerSecond, uint maxAcceleration, uint ticksPerPulse, uint dutyTicks, Port directionPort, uint directionBit, Port stepPort, uint stepBit, Port mirrorPort = NULL, uint mirrorBit = 0);
+  CMotor(uint minSpeedMultiplier, uint initialSpeedMultiplier, uint maxAcceleration, uint ticksPerPulse, uint dutyTicks, Port directionPort, uint directionBit, Port stepPort, uint stepBit, Port mirrorPort = NULL, uint mirrorBit = 0);
 
   // Need to be able to configure when to step, how long the step pulse is.  Maybe how long the
   // direction pulse needs to be held after a step pulse starts.
   // [Should be able to set the entire set of motor pins in one go.]
 
   inline uint Acceleration() { return m_maxAcceleration; }
-  inline uint MaxStepsPerSecond() { return m_maxStepsPerSecond; }
+  inline uint MinSpeedMultiplier() { return m_minSpeedMultiplier; }
+  inline uint InitialSpeedMultiplier() { return m_initialSpeedMultiplier; }
+  inline uint CurrentSpeedMultiplier() { return m_currentSpeedMultiplier; }
   inline uint MinTicksPerStep() { return m_ticksPerPulse; }
 
 
   // SetDirection sets the direction for subsequent steps
   void SetDirection(bool positive);
+  
+  // SetCurrentSpeedMultiplier sets the current speed multiplier - used for storing
+  // the current speed during execution.
+  void SetCurrentSpeedMultiplier(uint speedMultiplier);
 
   // A Tick is one duty step.  i.e. If the duty cycle is 50% then one tick is
   // half the duty cycle.  If the duty cycle is 20% then one tick is 1/5th of the

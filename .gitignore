@@ -29,7 +29,8 @@
 *.app
 
 # VSCode files
-/.vs
+/.vs/**
+/.vscode/**
 
 
 # Debug
