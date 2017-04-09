@@ -1,14 +1,15 @@
 #ifndef __MOVEMENT_HPP__
 #define __MOVEMENT_HPP__
 
-#include <map>
 #include "MotorConfig.h"
 
 class CMovement {
 private:
   typedef struct _MotorStepData
   {
-    _MotorStepData(uint steps) : StepDefinition(steps) { }
+    _MotorStepData(uint steps, CMotor *pMotor) : 
+      StepDefinition(steps),
+      Motor(pMotor) { }
     
     int StepDefinition;
     int TicksPerStep;
@@ -16,13 +17,15 @@ private:
     int StepCount;
     int AccelerationStepLimit;
 
-    CMotor *pMotor;
+    CMotor *Motor;
   } MotorStepData;
   
   CMotorConfig& m_motorConfig;
 
-  typedef std::map<MotorId, MotorStepData*> MotorStepMap;
-  MotorStepMap m_stepData;
+  MotorStepData** m_stepData;
+
+  uint m_allocatedMotorSlots;
+  uint m_usedMotorSlots;
 
   uint m_accumulatedTicks;
   bool m_stopped;

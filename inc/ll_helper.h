@@ -1,13 +1,15 @@
 #ifndef __LL_HELPER_H__
 #define __LL_HELPER_H__
 
+#ifndef WIN32
 #include "nxp/iolpc2148.h"
+#endif
 #include "errors.h"
 
 #ifndef NULL
   #define NULL (0) 
 #endif
-
+#ifndef WIN32
 typedef union {
   struct {
     __REG32 P_0   : 1;
@@ -45,6 +47,7 @@ typedef union {
   };
   unsigned long volatile P;
 } PORT_BITS;
+#endif
 typedef volatile unsigned long *Port;
 typedef unsigned int uint;
 

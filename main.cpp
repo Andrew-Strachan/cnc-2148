@@ -118,7 +118,7 @@ int main()
   T0IR = 0x3;
   T0TCR_bit.CR = 1;  // Reset and hold the TC and PC at 0
   T0TCR_bit.CE = 1;
-  T0PR = 0x20;
+  T0PR = 0x04;
   T0MR0 = 1000;
   T0MR1 = 50;
   T0MCR_bit.MR1INT = 0;
@@ -151,13 +151,15 @@ int main()
   // Setup USB communication
 
   // Initialize motor drivers
-  CMotor *motor = new CMotor(10, 200, 10, 5, 2, &FIO0PIN, 14, &FIO0PIN, 15, &FIO0PIN, 16);
+  CMotor *motor = new CMotor(10, 1000, 10, 5, 2, &FIO0PIN, 14, &FIO0PIN, 15, &FIO0PIN, 16);
   motor->SetDirection(false);
   CMotor *yMotor = new CMotor(10, 200, 10, 5, 2, &FIO0PIN, 17, &FIO0PIN, 18, &FIO0PIN, 19);
   motor->SetDirection(false);
   CMotor *zMotor = new CMotor(10, 200, 10, 5, 2, &FIO0PIN, 9, &FIO0PIN, 10, &FIO0PIN, 11);
   motor->SetDirection(false);  
-  
+
+  int xLength = -5000;
+  int xLengthChange = 2000;
 
   CMotorConfig motorConfig;
   motorConfig.AddMotor(X_Axis, motor);
@@ -166,14 +168,14 @@ int main()
   
   CMovement *movement = new CMovement(motorConfig);
 
-  movement->AddLinearMove(X_Axis, 2500);
-  movement->AddLinearMove(Y_Axis, 1500);  
-  movement->AddLinearMove(Z_Axis, 3000);  
+  movement->AddLinearMove(X_Axis, xLength);
+  movement->AddLinearMove(Y_Axis, 3000);  
+  movement->AddLinearMove(Z_Axis, 2500);  
 
   unsigned speedMultiplier = 0;
   movement->Begin(&speedMultiplier);
   
-  const unsigned baseSpeed = 100;
+  const unsigned baseSpeed = 50;
   
   T0MR0 = baseSpeed * speedMultiplier;
   
@@ -256,8 +258,28 @@ int main()
       }
       else if (result == S_FALSE)
       {
+        T0TCR_bit.CR = 1;
+        
         // Movement is finished.
         FIO0SET_bit.P0_21 = 1;
+        
+        xLength += xLengthChange;
+        if (abs(xLength) > 5000)
+        {
+          xLengthChange = -xLengthChange;
+        }
+        
+        movement = new CMovement(motorConfig);
+
+        movement->AddLinearMove(X_Axis, xLength);
+        //movement->AddLinearMove(Y_Axis, 3000);  
+        //movement->AddLinearMove(Z_Axis, 2500);  
+        
+        movement->Begin(&speedMultiplier);
+        
+        T0MR0 = baseSpeed * speedMultiplier;
+        
+        T0TCR_bit.CR = 0;
       }
       else
       {
