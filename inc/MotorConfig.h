@@ -15,12 +15,20 @@ typedef enum tagMotorId {
   FilamentFeed_3 = 7
 } MotorId;
 
+
 typedef std::map<MotorId, CMotor*> MotorMap;
 
 class CMotorConfig
 {
 private:
-  MotorMap *m_motors;
+  typedef struct _MotorEntry {
+    MotorId Id;
+    CMotor *pMotor;
+  } MotorEntry;
+
+  uint m_allocatedMotors;
+  uint m_usedMotors;
+  MotorEntry *m_motors;
   
 public:
   CMotorConfig();

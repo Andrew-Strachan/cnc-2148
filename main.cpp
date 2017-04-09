@@ -272,8 +272,8 @@ int main()
         movement = new CMovement(motorConfig);
 
         movement->AddLinearMove(X_Axis, xLength);
-        //movement->AddLinearMove(Y_Axis, 3000);  
-        //movement->AddLinearMove(Z_Axis, 2500);  
+        movement->AddLinearMove(Y_Axis, 3000);  
+        movement->AddLinearMove(Z_Axis, 2500);  
         
         movement->Begin(&speedMultiplier);
         
