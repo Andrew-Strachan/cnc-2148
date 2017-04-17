@@ -1,8 +1,8 @@
-#include "c/intrinsics.h"
-#include "nxp/iolpc2148.h"
+#include "includes.h"
 #include "flags.h"
 #include "motor.h"
 #include "movement.h"
+#include "includes.h"
 
 typedef enum {
   None = 0x0,
@@ -41,6 +41,7 @@ void Timer0_Handler(void)
 
 int main()
 {
+  Boolean CdcConfigureStateHold;
 
   // Configure a pin with an LED on it as an OUTPUT and flash it
   SCS_bit.GPIO0M = 1;  // Enable fast GPIO on port 0
@@ -118,7 +119,7 @@ int main()
   T0IR = 0x3;
   T0TCR_bit.CR = 1;  // Reset and hold the TC and PC at 0
   T0TCR_bit.CE = 1;
-  T0PR = 0x04;
+  T0PR = 0x40;
   T0MR0 = 1000;
   T0MR1 = 50;
   T0MCR_bit.MR1INT = 0;
@@ -140,16 +141,23 @@ int main()
   VICVectAddr4 = (unsigned)Timer0_Handler;
   VICVectCntl4 = 0x20 | 4; // Timer0 will trigger Int Vector 4
 
-  // Enable interrupts and start the timers
-  __enable_irq();
 
   VICIntEnClear = 0x10;
-  VICIntEnable = 0x10;
+  VICIntEnable |= (1 << VIC_TIMER0);
 
   
 
   // Setup USB communication
+  UsbCdcInit();
 
+  // Enable interrupts 
+  __enable_irq();
+
+  // Soft connection enable
+  USB_ConnectRes(TRUE);
+  
+  CdcConfigureStateHold = !IsUsbCdcConfigure();
+ 
   // Initialize motor drivers
   CMotor *motor = new CMotor(10, 1000, 10, 5, 2, &FIO0PIN, 14, &FIO0PIN, 15, &FIO0PIN, 16);
   motor->SetDirection(false);
@@ -175,7 +183,7 @@ int main()
   unsigned speedMultiplier = 0;
   movement->Begin(&speedMultiplier);
   
-  const unsigned baseSpeed = 50;
+  const unsigned baseSpeed = 5;
   
   T0MR0 = baseSpeed * speedMultiplier;
   

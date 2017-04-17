@@ -2313,11 +2313,35 @@
             </data>
         </settings>
     </configuration>
+    <group>
+        <name>USB</name>
+        <file>
+            <name>$PROJ_DIR$\USB\cd_class.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\USB\usb_buffer.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\USB\usb_dev_desc.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\USB\usb_hooks.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\USB\usb_hw.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\USB\usb_t9.c</name>
+        </file>
+    </group>
     <file>
         <name>$PROJ_DIR$\handler.c</name>
         <configuration>
             <name>Debug</name>
         </configuration>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\LPC_SysControl.c</name>
     </file>
     <file>
         <name>$PROJ_DIR$\main.cpp</name>
