@@ -9,6 +9,11 @@ CMotorConfig::CMotorConfig() :
   m_motors = (MotorEntry*)malloc(m_allocatedMotors * sizeof(MotorEntry));
 }
 
+MotorEntry* CMotorConfig::operator[](uint index)
+{
+  return (m_usedMotors <= index) ? NULL : &m_motors[index];
+}
+
 int CMotorConfig::AddMotor(MotorId motorId, CMotor* pMotor)
 {
   for (uint index = 0; index < m_usedMotors; ++index)

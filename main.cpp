@@ -181,7 +181,7 @@ int main()
   unsigned speedMultiplier = 0;
   movement->Begin(&speedMultiplier);
   
-  const unsigned baseSpeed = 5;
+  const unsigned baseSpeed = 20;
   
   T0MR0 = baseSpeed * speedMultiplier;
   
@@ -266,9 +266,12 @@ int main()
         else if (result == S_FALSE)
         {
           // Movement is finished.
-          T0TCR_bit.CR = 1;
-          FIO0SET_bit.P0_21 = 1;
-          
+          if (movement != jogMovement)
+          {
+            T0TCR_bit.CR = 1;
+            FIO0SET_bit.P0_21 = 1;
+          }
+
           // TODO: We should be running a program so 
           // get the next step in the program
 
@@ -327,8 +330,6 @@ int main()
           
           jogMovement->SetAxes(move);
       }
-      
-      UsbCdcWrite((Int8U*)controlMessageBuffer, 1);
     }
   }
 }

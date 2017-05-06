@@ -17,15 +17,14 @@ typedef enum tagMotorId {
 
 
 typedef std::map<MotorId, CMotor*> MotorMap;
-
-class CMotorConfig
-{
-private:
   typedef struct _MotorEntry {
     MotorId Id;
     CMotor *pMotor;
   } MotorEntry;
 
+class CMotorConfig
+{
+private:
   uint m_allocatedMotors;
   uint m_usedMotors;
   MotorEntry *m_motors;
@@ -36,6 +35,10 @@ public:
   int AddMotor(MotorId motorId, CMotor *pMotor);
   
   int GetMotor(MotorId motorId, CMotor **pMotor);
+
+  MotorEntry* operator[](uint index);
+
+  inline uint Length() { return m_usedMotors; }
 };
 
 #endif // __MOTORCONFIG_H__

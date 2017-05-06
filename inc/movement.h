@@ -7,8 +7,9 @@ class CMovement {
 protected:
   typedef struct _MotorStepData
   {
-    _MotorStepData(uint steps, CMotor *pMotor) : 
+    _MotorStepData(uint steps, MotorId id, CMotor *pMotor) : 
       StepDefinition(steps),
+      Id(id),
       Motor(pMotor) { }
     
     int StepDefinition;
@@ -18,6 +19,7 @@ protected:
     int AccelerationStepLimit;
 
     CMotor *Motor;
+    MotorId Id;
   } MotorStepData;
   
   CMotorConfig& m_motorConfig;
@@ -29,6 +31,11 @@ protected:
 
   uint m_accumulatedTicks;
   bool m_stopped;
+
+protected:
+  uint Decelerate(MotorStepData *pStepData, uint maxSpeedMultiplier);
+
+  uint Accelerate(MotorStepData *pStepData, uint maxSpeedMultiplier);
 
 public:
   // Constructor

@@ -44,7 +44,7 @@ int CMovement::AddLinearMove(MotorId motorId, int steps)
     m_stepData = (MotorStepData**)realloc(m_stepData, m_allocatedMotorSlots * sizeof(MotorStepData*));
   }
 
-  m_stepData[m_usedMotorSlots++] = new MotorStepData(steps, pMotor);
+  m_stepData[m_usedMotorSlots++] = new MotorStepData(steps, motorId, pMotor);
 
   return S_OK;
 }
@@ -121,9 +121,11 @@ int CMovement::Tick(uint* pPeriodMultipler)
     uint maxSpeedMultiplier = 0;
     for (uint index = 0; index < m_usedMotorSlots; ++index)
     {
-      int tickCount = ++m_stepData[index]->TickCount;
+      MotorStepData *pStepData = m_stepData[index];
 
-      if (m_stepData[index]->StepCount >= abs(m_stepData[index]->StepDefinition))
+      int tickCount = ++pStepData->TickCount;
+
+      if (pStepData->StepCount >= abs(pStepData->StepDefinition))
       {
         // This motor is complete
       }
@@ -133,61 +135,29 @@ int CMovement::Tick(uint* pPeriodMultipler)
         // in progress
         result = S_OK;
         
-        if (tickCount >= m_stepData[index]->TicksPerStep)
+        if (tickCount >= pStepData->TicksPerStep)
         {
-          ++m_stepData[index]->StepCount;
-          m_stepData[index]->TickCount -= m_stepData[index]->TicksPerStep;
+          ++pStepData->StepCount;
+          pStepData->TickCount -= pStepData->TicksPerStep;
           
-          m_stepData[index]->Motor->Tick(true);
+          pStepData->Motor->Tick(true);
 
           // Should we start slowing down?
-          if (m_stepData[index]->StepCount >= (abs(m_stepData[index]->StepDefinition) - m_stepData[index]->AccelerationStepLimit))  
+          if (pStepData->StepCount >= (abs(pStepData->StepDefinition) - pStepData->AccelerationStepLimit))  
           {
-            // Time to start slowing down 
-            uint initialSpeedMultiplier = m_stepData[index]->Motor->InitialSpeedMultiplier();
-            uint speedMultiplier = m_stepData[index]->Motor->CurrentSpeedMultiplier();
-            if (speedMultiplier < initialSpeedMultiplier)
-            {
-              speedMultiplier = min(initialSpeedMultiplier, speedMultiplier + m_stepData[index]->Motor->Acceleration());
-              
-              m_stepData[index]->Motor->SetCurrentSpeedMultiplier(speedMultiplier);
-              
-              maxSpeedMultiplier = max(speedMultiplier, maxSpeedMultiplier);
-            }
-            else
-            {
-              maxSpeedMultiplier = max(initialSpeedMultiplier, maxSpeedMultiplier);
-
-              m_stepData[index]->Motor->SetCurrentSpeedMultiplier(maxSpeedMultiplier);
-            }
+            maxSpeedMultiplier = Decelerate(pStepData, maxSpeedMultiplier);
           }
           else 
           {
-            uint minSpeedMultiplier = m_stepData[index]->Motor->MinSpeedMultiplier();
-            uint speedMultiplier = m_stepData[index]->Motor->CurrentSpeedMultiplier();
-            
-            // Are we still accelerating?
-            if (speedMultiplier > minSpeedMultiplier)
-            {
-              // Accelerating
-              speedMultiplier = max(minSpeedMultiplier, speedMultiplier - m_stepData[index]->Motor->Acceleration());
-              
-              m_stepData[index]->Motor->SetCurrentSpeedMultiplier(speedMultiplier);
-              
-              maxSpeedMultiplier = max(speedMultiplier, maxSpeedMultiplier);
-            }
-            else
-            {
-              maxSpeedMultiplier = max(m_stepData[index]->Motor->CurrentSpeedMultiplier(), maxSpeedMultiplier);
-            }
+            maxSpeedMultiplier = Accelerate(pStepData, maxSpeedMultiplier);
           }
         }
         else
         {
-          m_stepData[index]->Motor->Tick(false);
-          m_stepData[index]->TickCount = tickCount;
+          pStepData->Motor->Tick(false);
+          pStepData->TickCount = tickCount;
           
-          maxSpeedMultiplier = max(m_stepData[index]->Motor->CurrentSpeedMultiplier(), maxSpeedMultiplier);
+          maxSpeedMultiplier = max(pStepData->Motor->CurrentSpeedMultiplier(), maxSpeedMultiplier);
         }
       }
     }
@@ -206,4 +176,50 @@ void CMovement::Cancel(bool emergencyStop)
 {
   // For now, just perform an emergency stop always
   m_stopped = true;
+}
+
+uint CMovement::Accelerate(MotorStepData *pStepData, uint maxSpeedMultiplier)
+{
+  uint minSpeedMultiplier = pStepData->Motor->MinSpeedMultiplier();
+  uint speedMultiplier = pStepData->Motor->CurrentSpeedMultiplier();
+  
+  // Are we still accelerating?
+  if (speedMultiplier > minSpeedMultiplier)
+  {
+    // Accelerating
+    speedMultiplier = max(minSpeedMultiplier, speedMultiplier - pStepData->Motor->Acceleration());
+    
+    pStepData->Motor->SetCurrentSpeedMultiplier(speedMultiplier);
+    
+    maxSpeedMultiplier = max(speedMultiplier, maxSpeedMultiplier);
+  }
+  else
+  {
+    maxSpeedMultiplier = max(pStepData->Motor->CurrentSpeedMultiplier(), maxSpeedMultiplier);
+  }
+
+  return maxSpeedMultiplier;
+}
+
+uint CMovement::Decelerate(MotorStepData *pStepData, uint maxSpeedMultiplier)
+{
+  // Time to start slowing down 
+  uint initialSpeedMultiplier = pStepData->Motor->InitialSpeedMultiplier();
+  uint speedMultiplier = pStepData->Motor->CurrentSpeedMultiplier();
+  if (speedMultiplier < initialSpeedMultiplier)
+  {
+    speedMultiplier = min(initialSpeedMultiplier, speedMultiplier + pStepData->Motor->Acceleration());
+    
+    pStepData->Motor->SetCurrentSpeedMultiplier(speedMultiplier);
+    
+    maxSpeedMultiplier = max(speedMultiplier, maxSpeedMultiplier);
+  }
+  else
+  {
+    maxSpeedMultiplier = max(initialSpeedMultiplier, maxSpeedMultiplier);
+
+    pStepData->Motor->SetCurrentSpeedMultiplier(maxSpeedMultiplier);
+  }
+
+  return maxSpeedMultiplier;
 }
