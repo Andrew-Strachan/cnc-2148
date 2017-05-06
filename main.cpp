@@ -2,10 +2,11 @@
 #include "flags.h"
 #include "motor.h"
 #include "movement.h"
+#include "jogmovement.h"
 #include "includes.h"
 
 typedef enum {
-  None = 0x0,
+  ExecutionNone = 0x0,
   Tick = 0x1,
   Stop = 0x2,
   ConfigUpdated = 0x4,
@@ -14,7 +15,7 @@ typedef enum {
 } ExecutionFlags;
 //typedef CFlags<ExecutionFlagValues> ExecutionFlags;
 
-volatile ExecutionFlags g_flags = None;
+volatile ExecutionFlags g_flags = ExecutionNone;
 
 void DefaultInterruptHandler(void)
 {
@@ -174,11 +175,8 @@ int main()
   motorConfig.AddMotor(Y_Axis, yMotor);  
   motorConfig.AddMotor(Z_Axis, zMotor);
   
-  CMovement *movement = new CMovement(motorConfig);
-
-  movement->AddLinearMove(X_Axis, xLength);
-  movement->AddLinearMove(Y_Axis, 3000);  
-  movement->AddLinearMove(Z_Axis, 2500);  
+  CJogMovement *jogMovement = new CJogMovement(motorConfig);
+  CMovement *movement = jogMovement;
 
   unsigned speedMultiplier = 0;
   movement->Begin(&speedMultiplier);
@@ -245,55 +243,54 @@ int main()
 
       // Perform the next tick.  This just means that our timer went off, it doesn't necessarily
       // indicate that a step is due for any particular axis/motor.
-      //ExecuteTick();
-      int result = movement->Tick(&speedMultiplier);
-      if (result == S_OK)
+      if (movement)
       {
-        T0MR0 = baseSpeed * speedMultiplier;
-        
-        if (++i > 0x20)
+        int result = movement->Tick(&speedMultiplier);
+        if (result == S_OK)
         {
-          i = 0;
-          if (FIO0PIN_bit.P0_21 & 1)
+          T0MR0 = baseSpeed * speedMultiplier;
+          
+          if (++i > 0x20)
           {
-            FIO0CLR_bit.P0_21 = 1;
-          }
-          else
-          {
-            FIO0SET_bit.P0_21 = 1;
+            i = 0;
+            if (FIO0PIN_bit.P0_21 & 1)
+            {
+              FIO0CLR_bit.P0_21 = 1;
+            }
+            else
+            {
+              FIO0SET_bit.P0_21 = 1;
+            }
           }
         }
-      }
-      else if (result == S_FALSE)
-      {
-        T0TCR_bit.CR = 1;
-        
-        // Movement is finished.
-        FIO0SET_bit.P0_21 = 1;
-        
-        xLength += xLengthChange;
-        if (abs(xLength) > 5000)
+        else if (result == S_FALSE)
         {
-          xLengthChange = -xLengthChange;
-        }
-        
-        movement = new CMovement(motorConfig);
+          // Movement is finished.
+          T0TCR_bit.CR = 1;
+          FIO0SET_bit.P0_21 = 1;
+          
+          // TODO: We should be running a program so 
+          // get the next step in the program
 
-        movement->AddLinearMove(X_Axis, xLength);
-        movement->AddLinearMove(Y_Axis, 3000);  
-        movement->AddLinearMove(Z_Axis, 2500);  
-        
-        movement->Begin(&speedMultiplier);
-        
-        T0MR0 = baseSpeed * speedMultiplier;
-        
-        T0TCR_bit.CR = 0;
-      }
-      else
-      {
-        // We hit an error
-        g_flags |= Stop;
-        
+          // movement = new CMovement(motorConfig);
+
+          //movement->AddLinearMove(X_Axis, xLength);
+          //movement->AddLinearMove(Y_Axis, 3000);  
+          //movement->AddLinearMove(Z_Axis, 2500);  
+          
+          //movement->Begin(&speedMultiplier);
+          
+          //T0MR0 = baseSpeed * speedMultiplier;
+          
+          //T0TCR_bit.CR = 0;
+        }
+        else
+        {
+          // We hit an error
+          g_flags |= Stop;
+          movement = jogMovement = new CJogMovement(motorConfig);
+          
+        }
       }
       
       if (g_flags & Tick != 0)
@@ -314,6 +311,24 @@ int main()
     if (g_flags & Go)
     {
       // If we have valid configuration then start the sequence
+    }
+    
+    char controlMessageBuffer[64];
+    int bytesRead = UsbCdcRead((Int8U*)controlMessageBuffer, sizeof(controlMessageBuffer)/sizeof(controlMessageBuffer[0]));
+    if (bytesRead > 0)
+    {
+      // Check for a valid message
+      if (controlMessageBuffer[0] == 'J' &&
+          controlMessageBuffer[1] == 'O' &&
+          controlMessageBuffer[2] == 'G' &&
+          controlMessageBuffer[3] == ' ')
+      {
+          JogMoveFlags move = (JogMoveFlags)controlMessageBuffer[4];
+          
+          jogMovement->SetAxes(move);
+      }
+      
+      UsbCdcWrite((Int8U*)controlMessageBuffer, 1);
     }
   }
 }

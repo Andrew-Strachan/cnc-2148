@@ -4,7 +4,7 @@
 #include "MotorConfig.h"
 
 class CMovement {
-private:
+protected:
   typedef struct _MotorStepData
   {
     _MotorStepData(uint steps, CMotor *pMotor) : 
@@ -62,7 +62,7 @@ public:
   // Returns 0 on success
   //         1 on completion
   //        -ve on failure
-  int Tick(uint* pPeriodMultipler);
+  virtual int Tick(uint* pPeriodMultipler);
 
   // Cancel stops the movement and handles any resets required.
   // Parameters:

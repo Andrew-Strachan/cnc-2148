@@ -2341,6 +2341,9 @@
         </configuration>
     </file>
     <file>
+        <name>$PROJ_DIR$\jogmovement.c</name>
+    </file>
+    <file>
         <name>$PROJ_DIR$\LPC_SysControl.c</name>
     </file>
     <file>

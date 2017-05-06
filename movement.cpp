@@ -33,7 +33,7 @@ int CMovement::AddLinearMove(MotorId motorId, int steps)
   {
     if (m_stepData[index]->Motor == pMotor)
     {
-    return E_DUPLICATE_RESOURCE_MOVE;
+      return E_DUPLICATE_RESOURCE_MOVE;
     }
   }
 
@@ -119,8 +119,8 @@ int CMovement::Tick(uint* pPeriodMultipler)
   if (!m_stopped)
   {
     uint maxSpeedMultiplier = 0;
-  for (uint index = 0; index < m_usedMotorSlots; ++index)
-  {
+    for (uint index = 0; index < m_usedMotorSlots; ++index)
+    {
       int tickCount = ++m_stepData[index]->TickCount;
 
       if (m_stepData[index]->StepCount >= abs(m_stepData[index]->StepDefinition))

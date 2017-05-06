@@ -71,7 +71,7 @@
 #define CDC_DEVICE_SUPPORT_BREAK        1
 #define CDC_BRK_TIMER_INTR_PRI          3
 
-#define CDC_DATA_RATE                   CBR_9600
+#define CDC_DATA_RATE                   CBR_115200
 #define CDC_DATA_BITS                   8
 #define CDC_PARITY                      NOPARITY
 #define CDC_STOP_BITS                   ONESTOPBIT
