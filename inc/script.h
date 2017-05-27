@@ -1,25 +1,24 @@
-// Script.h
-
 #ifndef __SCRIPT_H__
 #define __SCRIPT_H__
+
+#include "program.h"
 
 class CScript
 {
 private:
-  typedef enum
-  {
-    Absolute = 0x1,  // vs Relative
-    Inches = 0x2, // vs mm
-  } Modes ;
+  Modes m_mode;
 
-  typedef enum
+  GCode[] m_gcodeTable;
 
-  MovementMode m_mode;
+  bool SkipWhiteSpace(char** index);;
+
+  char* LoadParameters(char[] allowedParameters, char* index);
 
 public:
   CScript();
 
-  int Load(uchar* rawScript);
-}
+  int Load(uchar* rawScript, Program *program);
+
+};
 
 #endif // __SCRIPT_H__
